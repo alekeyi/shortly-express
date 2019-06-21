@@ -5,6 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
+const cookieParser = require('./middleware/cookieParser');
 
 const app = express();
 
@@ -36,6 +37,22 @@ app.get('/links',
     .error(error => {
       res.status(500).send(error);
     });
+});
+
+// adding sign up get request
+app.get('/signup', 
+(req, res) => {
+  console.log("Signup request server-side");
+  res.render('signup');
+});
+
+// adding login get request
+app.get('/login', 
+(req, res) => {
+  // console.log('Request: ',req);
+  console.log("Login request server-side");
+  console.log("Here your cookie: ", res.cookie('COOKIE TEST', "DEFINED"));
+  res.render('login');
 });
 
 app.post('/links', 
@@ -78,7 +95,67 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+// adding sign up post
+app.post('/signup', (req, res) => {
+  // console.log(req) 
+  //do something with request. parse body??
+  // console.log(req.data)
+  var options = {
+    username: req.body.username
+  }
 
+  //see if user is in the database
+  models.Users.get(options)
+  .then((val) => {
+    if (val !== undefined){
+      //we know the user is in the database
+      console.log('the user exists in the db')
+      //write to db
+      res.end('This user already exists')
+      
+    } else {
+      if (req.body.password && req.body.username) {
+        let user = {
+          username : req.body.username,
+          salt : '1234',
+          password : req.body.password
+        }
+        models.Users.create(user); 
+        res.end('Account created.');
+      } else {
+        res.end('Fill in both username and password.');
+      }
+    }
+
+  });
+
+
+});
+
+// adding login post
+app.post('/login', (req, res) => {
+  
+  var options = {
+    username: req.body.username
+  }
+
+  //see if user is in the database
+  models.Users.get(options)
+  .then((userdata) => userdata)
+  .then((userdata) => models.Users.compare(req.body.password, userdata.password, userdata.salt))
+  .then((result) => {
+
+    if (result) {
+      //eventually do something with session and redirect to home page
+      res.end('logged in successfully')
+    } else {
+      res.end('invalid username and password')
+    }
+
+  });
+  
+  // res.end("Done.");
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
