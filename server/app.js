@@ -150,22 +150,31 @@ app.post('/login', (req, res) => {
   models.Users.get(options)
     .then((userdata) => userdata)
     .then((userdata) => {
+      console.log('userdata; ' + JSON.stringify(userdata))
+
       if (userdata !== undefined) {
-        models.Users.compare(req.body.password, userdata.password, userdata.salt);
+        return models.Users.compare(req.body.password, userdata.password, userdata.salt)
+        
       } else {
         // res.end('username does not exist');
         res.location('/login');
         res.render('login');
+        
       }
     })
+    
     .then((result) => {
-
+  //if user found in database
       if (result) {
-        //eventually do something with session and redirect to home page
-        // res.end('logged in successfully')
+        //CASE: VALID PASSWORD
+        console.log('result is: ' + result)
+        console.log('valid password')
         res.location('/');
         res.render('index');
       } else {
+        //CASE INVALID PASSWORD
+        console.log('result is: ' + result)
+        console.log('invalid password')
         res.location('/');
         // res.end('invalid username and password');
         res.location('/login');
