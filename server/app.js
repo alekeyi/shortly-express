@@ -12,87 +12,79 @@ const app = express();
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'ejs');
 
-
 app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(cookieParser);
+app.use(Auth.createSession);
 
+app.get('/', (req, res) => {
+  res.render('index');
+});
 
+app.get('/create', (req, res) => {
+  res.render('index');
+});
 
-app.get('/',
-  (req, res) => {
-    res.render('index');
-  });
-
-app.get('/create',
-  (req, res) => {
-    res.render('index');
-  });
-
-app.get('/links',
-  (req, res, next) => {
-    models.Links.getAll()
-      .then(links => {
-        res.status(200).send(links);
-      })
-      .error(error => {
-        res.status(500).send(error);
-      });
-  });
+app.get('/links', (req, res, next) => {
+  models.Links.getAll()
+    .then(links => {
+      res.status(200).send(links);
+    })
+    .error(error => {
+      res.status(500).send(error);
+    });
+});
 
 // adding sign up get request
-app.get('/signup',
-  (req, res) => {
-    console.log("Signup request server-side");
-    res.render('signup');
-  });
+app.get('/signup', (req, res) => {
+  console.log('Signup request server-side');
+  res.render('signup');
+});
 
 // adding login get request
-app.get('/login',
-  (req, res) => {
-    console.log("Login request server-side");
-    // console.log("Here your cookie: ", res.cookie("COOKIE TEST", "DEFINED"));
-    res.render('login');
-  });
+app.get('/login', (req, res) => {
+  console.log('Login request server-side');
+  // console.log("Here your cookie: ", res.cookie("COOKIE TEST", "DEFINED"));
+  res.render('login');
+});
 
-app.post('/links',
-  (req, res, next) => {
-    var url = req.body.url;
-    if (!models.Links.isValidUrl(url)) {
-      // send back a 404 if link is not valid
-      return res.sendStatus(404);
-    }
+app.post('/links', (req, res, next) => {
+  var url = req.body.url;
+  if (!models.Links.isValidUrl(url)) {
+    // send back a 404 if link is not valid
+    return res.sendStatus(404);
+  }
 
-    return models.Links.get({ url })
-      .then(link => {
-        if (link) {
-          throw link;
-        }
-        return models.Links.getUrlTitle(url);
-      })
-      .then(title => {
-        return models.Links.create({
-          url: url,
-          title: title,
-          baseUrl: req.headers.origin
-        });
-      })
-      .then(results => {
-        return models.Links.get({ id: results.insertId });
-      })
-      .then(link => {
+  return models.Links.get({ url })
+    .then(link => {
+      if (link) {
         throw link;
-      })
-      .error(error => {
-        res.status(500).send(error);
-      })
-      .catch(link => {
-        res.status(200).send(link);
+      }
+      return models.Links.getUrlTitle(url);
+    })
+    .then(title => {
+      return models.Links.create({
+        url: url,
+        title: title,
+        baseUrl: req.headers.origin
       });
-  });
+    })
+    .then(results => {
+      return models.Links.get({ id: results.insertId });
+    })
+    .then(link => {
+      throw link;
+    })
+    .error(error => {
+      res.status(500).send(error);
+    })
+    .catch(link => {
+      res.status(200).send(link);
+    });
+});
 
 /************************************************************/
 // Write your authentication routes here
@@ -100,87 +92,82 @@ app.post('/links',
 
 // adding sign up post
 app.post('/signup', (req, res) => {
-  // console.log(req) 
+  // console.log(req)
   //do something with request. parse body??
   // console.log(req.data)
   var options = {
     username: req.body.username
-  }
+  };
 
   //see if user is in the database
-  models.Users.get(options)
-    .then((val) => {
-      if (val !== undefined) {
-        //we know the user is in the database
-        console.log('the user exists in the db')
-        //write to db
-        // res.end('This user already exists')
-        res.location('/signup');
-        res.render('signup');
-
+  models.Users.get(options).then(val => {
+    if (val !== undefined) {
+      //we know the user is in the database
+      console.log('the user exists in the db');
+      //write to db
+      // res.end('This user already exists')
+      res.location('/signup');
+      res.render('signup');
+    } else {
+      if (req.body.password && req.body.username) {
+        let user = {
+          username: req.body.username,
+          salt: '1234',
+          password: req.body.password
+        };
+        models.Users.create(user);
+        // res.end('Account created.');
+        res.location('/');
+        res.render('index');
       } else {
-        if (req.body.password && req.body.username) {
-          let user = {
-            username: req.body.username,
-            salt: '1234',
-            password: req.body.password
-          }
-          models.Users.create(user);
-          // res.end('Account created.');
-          res.location('/');
-          res.render('index');
-        } else {
-          res.end('Fill in both username and password.');
-        }
+        res.end('Fill in both username and password.');
       }
-
-    });
-
-
+    }
+  });
 });
 
 // adding login post
 app.post('/login', (req, res) => {
-
   var options = {
     username: req.body.username
-  }
+  };
 
   //see if user is in the database
   models.Users.get(options)
-    .then((userdata) => userdata)
-    .then((userdata) => {
-      console.log('userdata; ' + JSON.stringify(userdata))
+    .then(userdata => userdata)
+    .then(userdata => {
+      console.log('userdata; ' + JSON.stringify(userdata));
 
       if (userdata !== undefined) {
-        return models.Users.compare(req.body.password, userdata.password, userdata.salt)
-        
+        return models.Users.compare(
+          req.body.password,
+          userdata.password,
+          userdata.salt
+        );
       } else {
         // res.end('username does not exist');
         res.location('/login');
         res.render('login');
-        
       }
     })
-    
-    .then((result) => {
-  //if user found in database
+
+    .then(result => {
+      //if user found in database
       if (result) {
         //CASE: VALID PASSWORD
-        console.log('result is: ' + result)
-        console.log('valid password')
+        console.log('result is: ' + result);
+        console.log('valid password');
         res.location('/');
         res.render('index');
       } else {
         //CASE INVALID PASSWORD
-        console.log('result is: ' + result)
-        console.log('invalid password')
+        console.log('result is: ' + result);
+        console.log('invalid password');
         res.location('/');
         // res.end('invalid username and password');
         res.location('/login');
         res.render('login');
       }
-
     });
 
   // res.end("Done.");
@@ -193,10 +180,8 @@ app.post('/login', (req, res) => {
 /************************************************************/
 
 app.get('/:code', (req, res, next) => {
-
   return models.Links.get({ code: req.params.code })
     .tap(link => {
-
       if (!link) {
         throw new Error('Link does not exist');
       }
