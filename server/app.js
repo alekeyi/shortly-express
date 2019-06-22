@@ -114,7 +114,9 @@ app.post('/signup', (req, res) => {
         //we know the user is in the database
         console.log('the user exists in the db')
         //write to db
-        res.end('This user already exists')
+        // res.end('This user already exists')
+        res.location('/signup');
+        res.render('signup');
 
       } else {
         if (req.body.password && req.body.username) {
@@ -124,7 +126,9 @@ app.post('/signup', (req, res) => {
             password: req.body.password
           }
           models.Users.create(user);
-          res.end('Account created.');
+          // res.end('Account created.');
+          res.location('/');
+          res.render('index');
         } else {
           res.end('Fill in both username and password.');
         }
@@ -149,16 +153,23 @@ app.post('/login', (req, res) => {
       if (userdata !== undefined) {
         models.Users.compare(req.body.password, userdata.password, userdata.salt);
       } else {
-        res.end('username does not exist');
+        // res.end('username does not exist');
+        res.location('/login');
+        res.render('login');
       }
     })
     .then((result) => {
 
       if (result) {
         //eventually do something with session and redirect to home page
-        res.end('logged in successfully')
+        // res.end('logged in successfully')
+        res.location('/');
+        res.render('index');
       } else {
-        res.end('invalid username and password')
+        res.location('/');
+        // res.end('invalid username and password');
+        res.location('/login');
+        res.render('login');
       }
 
     });
