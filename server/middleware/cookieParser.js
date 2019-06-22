@@ -1,26 +1,19 @@
-
+const models = require('../models/');
 
 const parseCookies = (req, res, next) => {
 
-    console.log('cookie parser running');
-    // console.log(req)
-    if (Object.keys(req.body).length !== 0){
-        //generate a session
+    //IF COOKIES IN HEADER, PARSE THEM
+    if (req.headers.cookie) {
+        req.cookies = {};
+        console.log(req.headers.cookie);
+        console.log(typeof req.headers.cookie)
+        let temp = req.headers.cookie.split('=');
+        let cookieKey = temp[0];
+        let cookieVal = temp[1];
 
-        //set cookie with session hash
-
-        console.log('username: ' + req.body.username)
-        console.log('password: ' + req.body.password)
-    }
-    
-
-    if (req.cookies !== undefined) {
+        req.cookies[cookieKey] = cookieVal;
         console.log(req.cookies);
     }
-
-    //access cookie data
-
-    //transform cookies into object. 
 
     
     next()

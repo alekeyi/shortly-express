@@ -53,9 +53,8 @@ app.get('/signup',
 // adding login get request
 app.get('/login',
   (req, res) => {
-    // console.log('Request: ',req);
     console.log("Login request server-side");
-    // console.log("Here your cookie: ", res.cookie('COOKIE TEST', "DEFINED"));
+    // console.log("Here your cookie: ", res.cookie("COOKIE TEST", "DEFINED"));
     res.render('login');
   });
 
