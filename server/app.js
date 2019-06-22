@@ -106,8 +106,8 @@ app.post('/signup', (req, res) => {
       console.log('the user exists in the db');
       //write to db
       // res.end('This user already exists')
-      res.location('/signup');
-      res.render('signup');
+      // res.location('/signup');
+      res.redirect('/signup');
     } else {
       if (req.body.password && req.body.username) {
         let user = {
@@ -116,9 +116,8 @@ app.post('/signup', (req, res) => {
           password: req.body.password
         };
         models.Users.create(user);
-        // res.end('Account created.');
-        res.location('/');
-        res.render('index');
+        // console.log('Account created.');
+        res.redirect('/');
       } else {
         res.end('Fill in both username and password.');
       }
@@ -145,9 +144,8 @@ app.post('/login', (req, res) => {
           userdata.salt
         );
       } else {
-        // res.end('username does not exist');
-        res.location('/login');
-        res.render('login');
+        console.log('username does not exist');
+        res.redirect('/login');
       }
     })
 
@@ -157,17 +155,17 @@ app.post('/login', (req, res) => {
         //CASE: VALID PASSWORD
         console.log('result is: ' + result);
         console.log('valid password');
-        res.location('/');
-        res.render('index');
+        res.redirect('/');
       } else {
         //CASE INVALID PASSWORD
         console.log('result is: ' + result);
         console.log('invalid password');
-        res.location('/');
-        // res.end('invalid username and password');
-        res.location('/login');
-        res.render('login');
+        console.log('res.headers ', res.headers);
+        res.redirect('/login');
       }
+    })
+    .catch(err => {
+      return "Hi";
     });
 
   // res.end("Done.");
